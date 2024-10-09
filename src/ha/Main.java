@@ -28,7 +28,8 @@ public class Main {
         final var meta = LogMeta.parse(fileName);
         if (meta != null && filter.matches(meta)) {
           final var content = Files.readString(path);
-          System.out.printf("Log file from %s\n%s", meta.date(), content);
+          System.out.printf("Log file from %s\n%s", Logger.YMD.format(meta.date().getTime()),
+              content);
         }
       }
     }
