@@ -13,7 +13,6 @@ record LogMeta(Calendar date, String deviceName) {
     final var matcher = REGEX.matcher(s);
     if (matcher.matches()) {
       try {
-        System.out.println(matcher.group(1));
         // terrible API
         final var date = Logger.YMD.parse(matcher.group(1));
 
