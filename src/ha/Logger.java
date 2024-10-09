@@ -14,14 +14,14 @@ class Logger implements Closeable {
   final private Map<String, Entry> sinks;
   final private LoggingSink mainLog;
   final private Formatter fmt;
-  final private SimpleDateFormat YMD = new SimpleDateFormat("YYYY-MM-dd");
+  final public static SimpleDateFormat YMD = new SimpleDateFormat("yyyy-MM-dd");
 
   static interface Formatter {
     String format(final Calendar date, final String message, final Object[] attrs);
   }
 
   static class LineFormatter implements Formatter {
-    final private SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSSZ");
+    final private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
     public String format(final Calendar date, final String message, final Object[] attrs) {
       final var buf = new StringBuilder();
