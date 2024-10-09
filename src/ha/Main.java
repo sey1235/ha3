@@ -10,9 +10,11 @@ public class Main {
   public static void main(String[] args) {
     final var logPath = Path.of("./log");
     try (var logger = new Logger(logPath)) {
-      logger.log("Air Fryer 1", "Something happened", "test", 4, "yes", false);
-      logger.log("Air Fryer 2", "Something happened", "test", 4, "yes", false);
-      logger.log("Air Fryer 1", "Something happened");
+      Device device1 = new Device("Solar Panel", logger);
+      Device device2 = new Device("Air Conditioner", logger);
+      device1.logEnergy(150, true); // Producing energy
+      device2.logEnergy(100, false); // Consuming energy
+
       showLogs(logPath, LogFilter.any().from(Calendar.getInstance()));
     } catch (IOException e) {
       e.printStackTrace();
