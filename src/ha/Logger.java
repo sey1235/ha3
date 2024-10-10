@@ -9,18 +9,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.text.SimpleDateFormat;
 
-class Logger implements Closeable {
+public final class Logger implements Closeable {
   final private Path directory;
   final private Map<String, Entry> sinks;
   final private LoggingSink mainLog;
   final private Formatter fmt;
   final public static SimpleDateFormat YMD = new SimpleDateFormat("yyyy-MM-dd");
 
-  static interface Formatter {
+  public static interface Formatter {
     String format(final Calendar date, final String message, final Object[] attrs);
   }
 
-  static class LineFormatter implements Formatter {
+  public static final class LineFormatter implements Formatter {
     final private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
     public String format(final Calendar date, final String message, final Object[] attrs) {
@@ -53,11 +53,11 @@ class Logger implements Closeable {
   private static record Entry(LoggingSink sink, int date) {
   }
 
-  Logger(Path directory) throws IOException {
+  public Logger(final Path directory) throws IOException {
     this(directory, new LineFormatter());
   }
 
-  Logger(Path directory, Formatter fmt) throws IOException {
+  public Logger(final Path directory, final Formatter fmt) throws IOException {
     this.directory = directory;
     Files.createDirectories(directory);
     this.fmt = fmt;
@@ -69,7 +69,7 @@ class Logger implements Closeable {
     return directory.resolve(String.format("%s_%s.txt", YMD.format(date.getTime()), deviceName));
   }
 
-  void log(String deviceName, String message, Object... attrs) {
+  public void log(final String deviceName, final String message, Object... attrs) {
     final var now = Calendar.getInstance();
     Entry entry = sinks.get(deviceName);
     final var today = now.get(Calendar.DAY_OF_YEAR);

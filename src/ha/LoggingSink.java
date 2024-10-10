@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-class LoggingSink implements Closeable {
+public final class LoggingSink implements Closeable {
   OutputStream fd;
   Path path;
   boolean writable;
@@ -32,13 +32,13 @@ class LoggingSink implements Closeable {
     return Files.newOutputStream(path, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
   }
 
-  void delete() throws IOException {
+  public void delete() throws IOException {
     writable = false;
     fd.close();
     Files.delete(path);
   }
 
-  void move(final Path destination) throws IOException {
+  public void move(final Path destination) throws IOException {
     writable = false;
     fd.close();
     Files.move(path, destination);
@@ -46,13 +46,13 @@ class LoggingSink implements Closeable {
     writable = true;
   }
 
-  void archive(final Path destination) throws IOException {
+  public void archive(final Path destination) throws IOException {
     writable = false;
     fd.close();
     Files.move(path, destination);
   }
 
-  void writeEntry(final String entry) {
+  public void writeEntry(final String entry) {
     assert writable;
     assert entry.endsWith("\n");
     final var buf = StandardCharsets.UTF_8.encode(entry);

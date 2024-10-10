@@ -21,7 +21,7 @@ public class Main {
     }
   }
 
-  static void showLogs(Path directory, LogFilter filter) throws IOException {
+  static void showLogs(final Path directory, final LogFilter filter) throws IOException {
     try (var list = Files.list(directory)) {
       final var it = list.iterator();
       while (it.hasNext()) {

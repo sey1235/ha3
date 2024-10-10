@@ -4,7 +4,7 @@ import java.text.ParseException;
 import java.util.Calendar;
 import java.util.regex.Pattern;
 
-record LogMeta(Calendar date, String deviceName) {
+public record LogMeta(Calendar date, String deviceName) {
 
   final private static Pattern REGEX = Pattern.compile("(.+-.+-.+)_(.+)\\.txt");
 
@@ -24,7 +24,7 @@ record LogMeta(Calendar date, String deviceName) {
     return null;
   }
 
-  public static class LogFilter {
+  public static final class LogFilter {
     private Calendar from;
     private String deviceName;
 
