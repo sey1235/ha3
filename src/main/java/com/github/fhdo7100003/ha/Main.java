@@ -1,10 +1,10 @@
-package ha;
+package com.github.fhdo7100003.ha;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
-import ha.LogMeta.LogFilter;
+import com.github.fhdo7100003.ha.LogMeta.LogFilter;
 
 public class Main {
   public static void main(String[] args) {

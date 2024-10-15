@@ -1,4 +1,4 @@
-package ha;
+package com.github.fhdo7100003.ha;
 
 import java.io.Closeable;
 import java.io.IOException;

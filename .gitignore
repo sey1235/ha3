@@ -1,3 +1,8 @@
 log
 bin
 *.class
+target
+.mvn
+.settings
+.classpath
+.project

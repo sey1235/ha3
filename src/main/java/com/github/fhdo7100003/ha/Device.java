@@ -1,6 +1,4 @@
-package ha;
-
-import ha.Logger;
+package com.github.fhdo7100003.ha;
 
 public class Device {
   private String name;

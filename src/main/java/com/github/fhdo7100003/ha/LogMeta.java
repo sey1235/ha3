@@ -1,4 +1,4 @@
-package ha;
+package com.github.fhdo7100003.ha;
 
 import java.text.ParseException;
 import java.util.Calendar;
@@ -65,4 +65,3 @@ public record LogMeta(Calendar date, String deviceName) {
     }
   }
 }
-
