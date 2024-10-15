@@ -2,7 +2,7 @@
 
 Needs Eclipse Temurin JDK LTS 21
 
-Use ./mvnw on UNIX and ./mvnw.cmd on Windows
+Use `./mvnw` on UNIX and `./mvnw.cmd` on Windows
 
 Importing into eclipse: File -> Import -> Maven -> Checkout or import from local repo
 
