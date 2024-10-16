@@ -39,6 +39,12 @@
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.11.0</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -62,6 +68,38 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.3.0</version>
         </plugin>
+        <!-- TODO: get this to actually make a fat jar -->
+        <!-- <plugin> -->
+        <!--     <groupId>org.apache.maven.plugins</groupId> -->
+        <!--     <artifactId>maven-shade-plugin</artifactId> -->
+        <!--     <version>3.6.0</version> -->
+        <!--     <executions> -->
+        <!--         <execution> -->
+        <!--             <phase>package</phase> -->
+        <!--             <goals> -->
+        <!--                 <goal>shade</goal> -->
+        <!--             </goals> -->
+        <!--         </execution> -->
+        <!--     </executions> -->
+        <!--     <configuration> -->
+        <!--         <filters> -->
+        <!--             <filter> -->
+        <!--                 <artifact>*:*</artifact> -->
+        <!--                 <excludes> -->
+        <!--                     <exclude>META-INF/*.SF</exclude> -->
+        <!--                     <exclude>META-INF/*.DSA</exclude> -->
+        <!--                     <exclude>META-INF/*.RSA</exclude> -->
+        <!--                 </excludes> -->
+        <!--             </filter> -->
+        <!--         </filters> -->
+        <!--       <archive> -->
+        <!--         <manifest> -->
+        <!--           <addClasspath>true</addClasspath> -->
+        <!--           <mainClass>com.github.fhdo7100003.ha.Main</mainClass> -->
+        <!--         </manifest> -->
+        <!--       </archive> -->
+        <!--     </configuration> -->
+        <!-- </plugin> -->
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.4.2</version>
@@ -96,7 +134,8 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.4.1</version>
           <configuration>
-            <mainClass>org.github.fhdo7100003.ha.Main</mainClass>
+            <mainClass>com.github.fhdo7100003.ha.Main</mainClass>
+            <classpathScope>test</classpathScope>
           </configuration>
         </plugin>
       </plugins>

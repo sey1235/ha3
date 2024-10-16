@@ -3,20 +3,22 @@ package com.github.fhdo7100003.ha;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Calendar;
 import com.github.fhdo7100003.ha.LogMeta.LogFilter;
+import com.github.fhdo7100003.ha.Logger.LineFormatter;
+import com.github.fhdo7100003.ha.Simulation.StaticTimestampGenerator;
 
 public class Main {
   public static void main(String[] args) {
     final var logPath = Path.of("./log");
-    try (var logger = new Logger(logPath)) {
-      Device device1 = new Device("Solar Panel", logger);
-      Device device2 = new Device("Air Conditioner", logger);
-      device1.logEnergy(150, true); // Producing energy
-      device2.logEnergy(100, false); // Consuming energy
+    try (var logger = Logger.open(logPath, new LineFormatter(), new StaticTimestampGenerator())) {
+      final var sim = Simulation.fromPath(Path.of("./example_simulation.json"));
+      final var res = sim.run(logger);
 
-      showLogs(logPath, LogFilter.any().from(Calendar.getInstance()));
-    } catch (IOException e) {
+      System.out.printf("End result of simulation: %sWh %s\n", Math.abs(res.result()),
+          res.result() < 0 ? "consumed from power grid" : "added to power grid");
+
+      // showLogs(logPath, LogFilter.any().from(Calendar.getInstance()));
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }

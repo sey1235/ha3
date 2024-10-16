@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.github.fhdo7100003.ha.device.Device;
+
 import java.text.SimpleDateFormat;
 
 public final class Logger implements Closeable {
@@ -15,6 +18,7 @@ public final class Logger implements Closeable {
   final private LoggingSink mainLog;
   final private Formatter fmt;
   final public static SimpleDateFormat YMD = new SimpleDateFormat("yyyy-MM-dd");
+  final private TimestampGenerator timestampGenerator;
 
   public static interface Formatter {
     String format(final Calendar date, final String message, final Object[] attrs);
@@ -50,27 +54,53 @@ public final class Logger implements Closeable {
     }
   }
 
+  public static interface TimestampGenerator {
+    Calendar now();
+  }
+
+  public static class RealtimeGenerator implements TimestampGenerator {
+    @Override
+    public Calendar now() {
+      return Calendar.getInstance();
+    }
+  }
+
   private static record Entry(LoggingSink sink, int date) {
   }
 
-  public Logger(final Path directory) throws IOException {
-    this(directory, new LineFormatter());
+  public static Logger open(final Path directory, final Formatter fmt, final TimestampGenerator gen)
+      throws IOException {
+    Files.createDirectories(directory);
+    final var mainLog = LoggingSink.open(directory.resolve("all.txt"));
+    return new Logger(directory, fmt, gen, mainLog);
   }
 
-  public Logger(final Path directory, final Formatter fmt) throws IOException {
+  private Logger(final Path directory, final Formatter fmt, final TimestampGenerator timestampGenerator,
+      final LoggingSink mainLog) {
     this.directory = directory;
-    Files.createDirectories(directory);
     this.fmt = fmt;
-    this.mainLog = LoggingSink.open(directory.resolve("all.txt"));
+    this.mainLog = mainLog;
     this.sinks = new HashMap<>();
+    this.timestampGenerator = timestampGenerator;
   }
 
   private Path getPath(final Calendar date, final String deviceName) {
     return directory.resolve(String.format("%s_%s.txt", YMD.format(date.getTime()), deviceName));
   }
 
-  public void log(final String deviceName, final String message, Object... attrs) {
-    final var now = Calendar.getInstance();
+  public TimestampGenerator getTimestampGenerator() {
+    return timestampGenerator;
+  }
+
+  public void log(final String message, Object... attrs) {
+    final var now = timestampGenerator.now();
+    final var buf = fmt.format(now, message, attrs);
+    mainLog.writeEntry(buf);
+  }
+
+  public void logDevice(final Device device, final String message, Object... attrs) {
+    final var now = timestampGenerator.now();
+    final var deviceName = device.getName();
     Entry entry = sinks.get(deviceName);
     final var today = now.get(Calendar.DAY_OF_YEAR);
     LoggingSink sink;
