@@ -10,10 +10,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.github.fhdo7100003.ha.Logger.TimestampGenerator;
 import com.github.fhdo7100003.ha.device.*;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -26,6 +28,10 @@ public class Simulation {
   final List<Device> devices;
 
   public Simulation(Calendar startTime, Calendar endTime, List<Store> stores, List<Device> devices) {
+    if (startTime.compareTo(endTime) >= 0) {
+      throw new InvalidSimulation("Nonsensical start/end times");
+    }
+
     this.startTime = startTime;
     this.endTime = endTime;
     this.stores = stores;
@@ -36,9 +42,31 @@ public class Simulation {
     final var ret = obj.get(field);
     if (ret == null) {
       throw new JsonParseException(String.format("Missing field %s in %s", field, obj));
-    } else {
-      return ret;
     }
+
+    return ret;
+  }
+
+  private static <T> JsonElement forcePrimitiveField(final JsonObject obj, final String field, final Class<T> c) {
+    final var ret = forceField(obj, field);
+    final var prim = ret.getAsJsonPrimitive();
+
+    String err = null;
+    if (c == String.class) {
+      if (!prim.isString()) {
+        err = "Expected string";
+      }
+    } else if (c == Integer.class) {
+      if (!prim.isNumber()) {
+        err = "Expected integer";
+      }
+    }
+
+    if (err != null) {
+      throw new JsonParseException(String.format("%s for field %s: Got %s", err, field, prim));
+    }
+
+    return ret;
   }
 
   public static Simulation fromJSON(final String json) {
@@ -48,18 +76,20 @@ public class Simulation {
 
     final List<Device> devices = new ArrayList<>();
     final List<Store> stores = new ArrayList<>();
-    for (final var device : forceField(parsed, "devices").getAsJsonArray()) {
+    final var deviceArr = Objects.requireNonNullElseGet(forceField(parsed, "devices").getAsJsonArray(),
+        () -> new JsonArray());
+    for (final var device : deviceArr) {
       final var deviceObj = device.getAsJsonObject();
 
-      final var name = forceField(deviceObj, "name").getAsString();
-      final var type = forceField(deviceObj, "type").getAsString();
+      final var name = forcePrimitiveField(deviceObj, "name", String.class).getAsString();
+      final var type = forcePrimitiveField(deviceObj, "type", String.class).getAsString();
       switch (type) {
         case "StableDevice":
-          devices.add(new StableDevice(name, forceField(deviceObj, "produces").getAsInt()));
+          devices.add(new StableDevice(name, forcePrimitiveField(deviceObj, "produces", Integer.class).getAsInt()));
           break;
         case "Store":
-          final var capacity = forceField(deviceObj, "maxCapacity").getAsInt();
-          final var chargePerTick = forceField(deviceObj, "maxChargePerTick").getAsInt();
+          final var capacity = forcePrimitiveField(deviceObj, "maxCapacity", Integer.class).getAsInt();
+          final var chargePerTick = forcePrimitiveField(deviceObj, "maxChargePerTick", Integer.class).getAsInt();
           stores.add(new Store(name, capacity, chargePerTick));
           break;
         case "SolarPanel":
@@ -137,5 +167,11 @@ public class Simulation {
     final var parsed = Instant.parse(s);
     final var dt = ZonedDateTime.ofInstant(parsed, ZoneId.systemDefault());
     return GregorianCalendar.from(dt);
+  }
+
+  public static class InvalidSimulation extends RuntimeException {
+    public InvalidSimulation(final String msg) {
+      super(msg);
+    }
   }
 }
