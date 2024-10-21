@@ -34,7 +34,7 @@ public abstract class Device {
   public final int tick(final Calendar currentTime, final Logger logger) {
     final var v = innerTick(currentTime);
     if (v != 0) {
-      logger.log(name, v < 0 ? "consumed" : "produced", "value", v);
+      logger.logDevice(this, v < 0 ? "consumed" : "produced", "value", v);
     }
     return v;
   }
