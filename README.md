@@ -26,7 +26,7 @@ Importing into eclipse: File -> Import -> Maven -> Checkout or import from local
 
 ## Assignments
 
-- 7100003 [fhdo7100003](https://github.com/fhdo7100003) Exceptions, Unit test DeviceTest, LoggingSinkTest
-- 7220676 [sey1235](https://github.com/sey1235) Unit test SimulationTest
-- 7219646 [kanika-sehgal123](https://github.com/kanika-sehgal123) Unit test LogMetaTest, LogfilterTest, LoggerTest, LineformatterTest
-- 7213668 [arnob32](https://github.com/arnob32) Unit test LogMetaTest
+- 7100003 [fhdo7100003](https://github.com/fhdo7100003) Parallelization, API
+- 7220676 [sey1235](https://github.com/sey1235) TODO
+- 7219646 [kanika-sehgal123](https://github.com/kanika-sehgal123) TODO
+- 7213668 [arnob32](https://github.com/arnob32) TODO
