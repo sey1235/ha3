@@ -3,8 +3,12 @@ package com.github.fhdo7100003.ha;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 import com.github.fhdo7100003.ha.LogMeta.LogFilter;
 import com.github.fhdo7100003.ha.Logger.LineFormatter;
+import com.github.fhdo7100003.ha.Simulation.Report;
 import com.github.fhdo7100003.ha.Simulation.StaticTimestampGenerator;
 
 public class Main {
@@ -20,6 +24,45 @@ public class Main {
       // showLogs(logPath, LogFilter.any().from(Calendar.getInstance()));
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  // this sucks
+  static class Result<T, E> {
+    T res;
+    E err;
+
+    private Result(T res, E err) {
+      this.res = res;
+      this.err = err;
+    }
+
+    public static <T, E> Result<T, E> ok(T res) {
+      return new Result<T, E>(res, null);
+    }
+
+    public static <T, E> Result<T, E> err(E err) {
+      return new Result<T, E>(null, err);
+    }
+  }
+
+  static record SimulationRunner(Path logRoot) {
+    CompletableFuture<Result<Report, IOException>> runSimulation(final Simulation sim) {
+      final var ret = new CompletableFuture<Result<Report, IOException>>();
+      Thread.ofPlatform().start(() -> {
+        final var id = UUID.randomUUID();
+        final var gen = new StaticTimestampGenerator();
+        try (final var logger = Logger.open(logRoot.resolve(id.toString()), new LineFormatter(), gen)) {
+          final var res = sim.run(logger);
+          System.out.printf("End result of simulation: %sWh %s\n", Math.abs(res.result()),
+              res.result() < 0 ? "consumed from power grid" : "added to power grid");
+
+          ret.complete(Result.ok(res));
+        } catch (IOException e) {
+          ret.complete(Result.err(e));
+        }
+      });
+      return ret;
     }
   }
 

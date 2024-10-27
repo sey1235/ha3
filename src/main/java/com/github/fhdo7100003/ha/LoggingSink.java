@@ -9,6 +9,55 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+class Close extends ReplyMessage<IOException> {
+}
+
+class LoggingSinkActor extends Actor {
+  private final LoggingSink sink;
+
+  public LoggingSinkActor(final LoggingSink sink) {
+    super();
+    this.sink = sink;
+  }
+
+  @Override
+  protected void handleMsg(Ref me, Object msg) throws UnhandledMessageException {
+    switch (msg) {
+      case WriteEntry w -> {
+        sink.writeEntry(w.line());
+      }
+
+      case Close c -> {
+        try {
+          sink.close();
+          c.reply(null);
+        } catch (IOException e) {
+          c.reply(e);
+        }
+      }
+
+      case Shutdown s -> {
+        try {
+          sink.close();
+        } catch (IOException e) {
+          throw new ShutdownError("Failed closing log file", e);
+        }
+      }
+
+      default -> {
+        throw new UnhandledMessageException(msg.getClass());
+      }
+    }
+  }
+
+  protected boolean handlesShutdown() {
+    return true;
+  }
+}
+
+record WriteEntry(String line) {
+}
+
 public final class LoggingSink implements Closeable {
   OutputStream fd;
   Path path;

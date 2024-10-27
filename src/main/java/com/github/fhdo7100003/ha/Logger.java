@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.github.fhdo7100003.ha.device.Device;
 
@@ -15,7 +16,7 @@ import java.text.SimpleDateFormat;
 public final class Logger implements Closeable {
   final private Path directory;
   final private Map<String, Entry> sinks;
-  final private LoggingSink mainLog;
+  final private Actor.Ref mainLog;
   final private Formatter fmt;
   final public static SimpleDateFormat YMD = new SimpleDateFormat("yyyy-MM-dd");
   final private TimestampGenerator timestampGenerator;
@@ -65,7 +66,7 @@ public final class Logger implements Closeable {
     }
   }
 
-  private static record Entry(LoggingSink sink, int date) {
+  private static record Entry(Actor.Ref sink, int date) {
   }
 
   public static Logger open(final Path directory, final Formatter fmt, final TimestampGenerator gen)
@@ -79,7 +80,7 @@ public final class Logger implements Closeable {
       final LoggingSink mainLog) {
     this.directory = directory;
     this.fmt = fmt;
-    this.mainLog = mainLog;
+    this.mainLog = Actor.spawn(new LoggingSinkActor(mainLog), 32);
     this.sinks = new HashMap<>();
     this.timestampGenerator = timestampGenerator;
   }
@@ -95,7 +96,7 @@ public final class Logger implements Closeable {
   public void log(final String message, Object... attrs) {
     final var now = timestampGenerator.now();
     final var buf = fmt.format(now, message, attrs);
-    mainLog.writeEntry(buf);
+    mainLog.tell(new WriteEntry(buf));
   }
 
   public void logDevice(final Device device, final String message, Object... attrs) {
@@ -103,14 +104,17 @@ public final class Logger implements Closeable {
     final var deviceName = device.getName();
     Entry entry = sinks.get(deviceName);
     final var today = now.get(Calendar.DAY_OF_YEAR);
-    LoggingSink sink;
+    Actor.Ref sink;
     if (entry == null || today != entry.date) {
       final var entryPath = getPath(now, deviceName);
       try {
         Entry oldEntry;
-        sink = LoggingSink.open(entryPath);
+        sink = Actor.spawn(new LoggingSinkActor(LoggingSink.open(entryPath)), 32);
         if ((oldEntry = sinks.put(deviceName, new Entry(sink, today))) != null) {
-          oldEntry.sink.close();
+          final var res = oldEntry.sink.ask(new Close());
+          if (res != null) {
+            throw res;
+          }
         }
       } catch (IOException e) {
         System.out.printf("Failed opening %s: %s\n", entryPath, e);
@@ -121,19 +125,23 @@ public final class Logger implements Closeable {
     }
 
     final var buf = fmt.format(now, message, attrs);
-    sink.writeEntry(buf);
+    sink.tell(new WriteEntry(buf));
 
-    mainLog.writeEntry(buf);
+    mainLog.tell(new WriteEntry(buf));
   }
 
   @Override
   public void close() throws IOException {
-    for (Entry v : sinks.values()) {
-      try {
-        v.sink.close();
-      } catch (Exception e) {
-        System.out.printf("Failed closing output %s\n: %s\n", v.sink.getPath(), e);
+    Consumer<Actor.Ref> closeSink = (a) -> {
+      final var ret = a.ask(new Close());
+      if (ret != null) {
+        System.out.printf("Failed closing output: %s\n", ret);
       }
+    };
+    for (Entry v : sinks.values()) {
+      closeSink.accept(v.sink);
     }
+
+    closeSink.accept(mainLog);
   }
 }
