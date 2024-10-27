@@ -8,29 +8,61 @@ import java.util.concurrent.CompletableFuture;
 
 import com.github.fhdo7100003.ha.LogMeta.LogFilter;
 import com.github.fhdo7100003.ha.Logger.LineFormatter;
+import com.github.fhdo7100003.ha.Simulation.InvalidSimulation;
 import com.github.fhdo7100003.ha.Simulation.Report;
 import com.github.fhdo7100003.ha.Simulation.StaticTimestampGenerator;
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+
+import io.javalin.Javalin;
+import io.javalin.config.Key;
+import io.javalin.http.staticfiles.Location;
 
 public class Main {
+  private static Key<SimulationRunner> runnerKey = new Key<>("runner");
+
+  record Response(UUID id, Report report) {
+
+  }
+
   public static void main(String[] args) {
-    final var logPath = Path.of("./log");
-    try (var logger = Logger.open(logPath, new LineFormatter(), new StaticTimestampGenerator())) {
-      final var sim = Simulation.fromPath(Path.of("./example_simulation.json"));
-      final var res = sim.run(logger);
+    final var logPath = "log";
+    final var runner = new SimulationRunner(Path.of(logPath));
+    // NOTE: intermediate variable otherwise horrible formatting
+    final var javalin = Javalin.create(cfg -> {
+      cfg.useVirtualThreads = true;
+      cfg.staticFiles.add(st -> {
+        st.hostedPath = "/logs";
+        st.directory = logPath;
+        st.location = Location.EXTERNAL;
+      });
+    });
 
-      System.out.printf("End result of simulation: %sWh %s\n", Math.abs(res.result()),
-          res.result() < 0 ? "consumed from power grid" : "added to power grid");
+    javalin
+        .put("/simulation", ctx -> {
+          final var body = ctx.body();
+          final var sim = Simulation.fromJSON(body);
+          // TODO: log above sim
+          final var res = runner.runSimulation(sim).join();
+          final var report = res.getOk();
+          if (report != null) {
+            final var gson = new Gson();
 
-      // showLogs(logPath, LogFilter.any().from(Calendar.getInstance()));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+            ctx.result(gson.toJson(report));
+          } else {
+            ctx.status(500);
+            ctx.result(res.getErr().toString());
+          }
+        })
+        .exception(JsonParseException.class, (e, ctx) -> ctx.status(400))
+        .exception(InvalidSimulation.class, (e, ctx) -> ctx.status(400))
+        .start(8000);
   }
 
   // this sucks
   static class Result<T, E> {
-    T res;
-    E err;
+    private T res;
+    private E err;
 
     private Result(T res, E err) {
       this.res = res;
@@ -44,20 +76,25 @@ public class Main {
     public static <T, E> Result<T, E> err(E err) {
       return new Result<T, E>(null, err);
     }
+
+    public T getOk() {
+      return this.res;
+    }
+
+    public E getErr() {
+      return this.err;
+    }
   }
 
   static record SimulationRunner(Path logRoot) {
-    CompletableFuture<Result<Report, IOException>> runSimulation(final Simulation sim) {
-      final var ret = new CompletableFuture<Result<Report, IOException>>();
+    CompletableFuture<Result<Response, IOException>> runSimulation(final Simulation sim) {
+      final var ret = new CompletableFuture<Result<Response, IOException>>();
       Thread.ofPlatform().start(() -> {
         final var id = UUID.randomUUID();
         final var gen = new StaticTimestampGenerator();
         try (final var logger = Logger.open(logRoot.resolve(id.toString()), new LineFormatter(), gen)) {
           final var res = sim.run(logger);
-          System.out.printf("End result of simulation: %sWh %s\n", Math.abs(res.result()),
-              res.result() < 0 ? "consumed from power grid" : "added to power grid");
-
-          ret.complete(Result.ok(res));
+          ret.complete(Result.ok(new Response(id, res)));
         } catch (IOException e) {
           ret.complete(Result.err(e));
         }

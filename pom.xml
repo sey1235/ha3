@@ -8,7 +8,7 @@
   <version>1.0-SNAPSHOT</version>
 
   <name>ha</name>
-  <url>http://github.com/fhdo7100003/ha2</url>
+  <url>http://github.com/fhdo7100003/ha3</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -43,6 +43,16 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.11.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.javalin</groupId>
+      <artifactId>javalin</artifactId>
+      <version>6.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>2.0.16</version>
     </dependency>
   </dependencies>
 
