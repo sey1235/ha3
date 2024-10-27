@@ -15,14 +15,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
 import io.javalin.Javalin;
-import io.javalin.config.Key;
 import io.javalin.http.staticfiles.Location;
 
 public class Main {
-  private static Key<SimulationRunner> runnerKey = new Key<>("runner");
-
   record Response(UUID id, Report report) {
-
   }
 
   public static void main(String[] args) {
@@ -46,6 +42,8 @@ public class Main {
           final var res = runner.runSimulation(sim).join();
           final var report = res.getOk();
           if (report != null) {
+            // NOTE: should probably not create a new thing
+            // for every request
             final var gson = new Gson();
 
             ctx.result(gson.toJson(report));
