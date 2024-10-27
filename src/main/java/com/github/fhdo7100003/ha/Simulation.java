@@ -136,7 +136,7 @@ public class Simulation {
     while (currentTime.compareTo(endTime) < 0) {
       setTimestamp.accept(currentTime);
 
-      var consumed = devices.stream().map(dev -> dev.tick(currentTime, logger)).reduce((a, b) -> a + b).get();
+      var consumed = devices.parallelStream().map(dev -> dev.tick(currentTime, logger)).reduce((a, b) -> a + b).get();
 
       final var it = stores.iterator();
       while (consumed != 0 && it.hasNext()) {
