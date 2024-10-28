@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
 import com.github.fhdo7100003.ha.device.Device;
@@ -15,7 +15,7 @@ import java.text.SimpleDateFormat;
 
 public final class Logger implements Closeable {
   final private Path directory;
-  final private Map<String, Entry> sinks;
+  final private ConcurrentMap<String, Entry> sinks;
   final private Actor.Ref mainLog;
   final private Formatter fmt;
   final public static SimpleDateFormat YMD = new SimpleDateFormat("yyyy-MM-dd");
@@ -81,7 +81,7 @@ public final class Logger implements Closeable {
     this.directory = directory;
     this.fmt = fmt;
     this.mainLog = Actor.spawn(new LoggingSinkActor(mainLog), 32);
-    this.sinks = new HashMap<>();
+    this.sinks = new ConcurrentHashMap<>();
     this.timestampGenerator = timestampGenerator;
   }
 
