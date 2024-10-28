@@ -21,6 +21,12 @@ public class LoggerTest {
     // Act
     logger.log("Test message");
 
+    // NOTE: logging is completely async so this is racy, just wait
+    // TODO: maybe make ensureFlushed method
+    try {
+      Thread.sleep(100);
+    } catch (InterruptedException e) {
+    }
     // Assert
     assertTrue(Files.exists(mainLogFile));
     String content = Files.readString(mainLogFile);
